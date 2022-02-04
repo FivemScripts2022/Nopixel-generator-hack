@@ -2,9 +2,13 @@ import sys, pygame
 import numpy as np
 import random
 import time
+import itertools
+
+
 
 buttons = []
 game_array = np.zeros((7,7))
+wrong_counter = 0
 def generate_solution(game_array):
     current_index = [0, 0]
     starting_index = [0, 0]
@@ -61,6 +65,7 @@ def generate_solution(game_array):
 
 
 class Button:
+
     def __init__(self, text, width, height, pos, array_position, game_array):
         # Core attributes
         self.pressed = False
@@ -71,6 +76,8 @@ class Button:
         self.top_rect = pygame.Rect(pos, (width, height))
         self.top_color = '#04581F'
         self.game_array = game_array
+        self.pos = pos
+        self.clicked = False
         # text
         self.text = text
         self.text_surf = gui_font.render(text, True, '#FFFFFF')
@@ -81,71 +88,132 @@ class Button:
         self.text_surf = gui_font.render(newtext, True, '#FFFFFF')
         self.text_rect = self.text_surf.get_rect(center=self.top_rect.center)
 
-    def draw(self, show_numbers):
-        if self.position == [0,0]:
-            print("I am the start")
-            self.image =
-        elif show_numbers:
-            pygame.draw.rect(screen, self.top_color, self.top_rect)
+    def draw(self, show_numbers, current_colour):
+        if (self.position == [0 + (game_array[0, 0]), 0] or self.position == [0, 0 + (game_array[0, 0])]) and not(current_colour is None):
+            pygame.draw.rect(screen, current_colour, self.top_rect)
             screen.blit(self.text_surf, self.text_rect)
             self.check_click()
         else:
-            pygame.draw.rect(screen, self.top_color, self.top_rect)
-            self.check_click()
+            if self.position == [0,0]:
+                top_left_image = pygame.image.load('top_left.png').convert_alpha()
+                top_left_image_width = top_left_image.get_width()
+                top_left_image_height = top_left_image.get_height()
+                top_left_image = pygame.transform.scale(top_left_image, (self.height, self.width) )
+                self.image_rect = top_left_image.get_rect(topleft=(self.pos))
+                screen.blit(top_left_image,(self.image_rect))
+                self.check_click()
+            elif self.position == [6,6]:
+                top_left_image = pygame.image.load('bottom_right.png').convert_alpha()
+                top_left_image_width = top_left_image.get_width()
+                top_left_image_height = top_left_image.get_height()
+                top_left_image = pygame.transform.scale(top_left_image, (self.height, self.width) )
+                self.image_rect = top_left_image.get_rect(topleft=(self.pos))
+                screen.blit(top_left_image,(self.image_rect))
+                self.check_click()
+            elif self.position in starting_position and show_numbers == True:
+                pygame.draw.rect(screen, self.top_color, self.top_rect)
+                screen.blit(self.text_surf, self.text_rect)
+                self.check_click()
+
+            elif show_numbers:
+                pygame.draw.rect(screen, self.top_color, self.top_rect)
+                screen.blit(self.text_surf, self.text_rect)
+                self.check_click()
+            else:
+                pygame.draw.rect(screen, self.top_color, self.top_rect)
+                self.check_click()
+
+
     def check_click(self):
+        global starting_position_new_version
+        global wrong_counter
         mouse_pos = pygame.mouse.get_pos()
         if self.top_rect.collidepoint(mouse_pos):
             if pygame.mouse.get_pressed()[0]:
                 self.pressed = True
                 self.change_text(f"{self.text}")
             else:
-                if self.pressed == True:
-                    print('click')
+                if self.pressed and not self.clicked:
                     self.pressed = False
-                    print(self.position)
-                    print(self.text)
-                    print("below")
-                    print([starting_position[0][0] + int(game_array[starting_position[0][0], starting_position[0][1]]), starting_position[0][1]])
+                    """
                     if ([starting_position[0][0] + int(game_array[starting_position[0][0], starting_position[0][1]]), starting_position[0][1]] == self.position)\
                             or ([starting_position[0][0], starting_position[0][1] + int(game_array[starting_position[0][0], starting_position[0][1]])] == self.position)\
                             :
-                        print("Yes")
                         del starting_position[0]
                         starting_position.insert(0, self.position)
                         self.top_color = '#00FF00'
                     elif ([starting_position[1][0] + int(game_array[starting_position[1][0], starting_position[1][1]]), starting_position[1][1]] == self.position)\
                             or ([starting_position[1][0], starting_position[1][1] + int(game_array[starting_position[1][0], starting_position[1][1]])] == self.position):
-                        print("Yes")
                         del starting_position[1]
                         starting_position.insert(1, self.position)
                         self.top_color = '#00FF00'
+                    """
+                    if ([starting_position_new_version[0] + int(game_array[starting_position_new_version[0], starting_position_new_version[1]]),
+                         starting_position_new_version[1]] == self.position) \
+                            or ([starting_position_new_version[0], starting_position_new_version[1] + int(
+                        game_array[starting_position_new_version[0], starting_position_new_version[1]])] == self.position) \
+                            :
+                        starting_position_new_version = self.position
+                        starting_position.insert(0, self.position)
+                        self.top_color = '#00FF00'
+                    elif ([starting_position_new_version[0] + int(game_array[starting_position_new_version[0], starting_position_new_version[1]]),
+                           starting_position_new_version[1]] == self.position) \
+                            or ([starting_position_new_version[0], starting_position_new_version[1] + int(
+                        game_array[starting_position_new_version[0], starting_position_new_version[1]])] == self.position):
+                        starting_position_new_version = self.position
+                        self.top_color = '#00FF00'
                     else:
-                        print("This is wrong")
-                        self.top_color = '#FF0000'
+                            self.top_color = '#FF0000'
+                            wrong_counter += 1
+
+                    self.clicked = True
+        for i in starting_position:
+            if i == [6, 6]:
+                bg = pygame.image.load("network access granted.png")
+                bg = pygame.transform.scale(bg, (screen.get_height(), screen.get_width()))
+                screen.blit(bg, (0, 0))
+        if wrong_counter == 3:
+            failed_bg = pygame.image.load("network_failed.png")
+            failed_bg = pygame.transform.scale(failed_bg, (screen.get_height(), screen.get_width()))
+            screen.blit(failed_bg, (0, 0))
+
+
 
 
 
 
 pygame.init()
-screen_width = 500
-screen_height = 500
-screen_size_ratio = 500/7
+screen_width = 622
+screen_height = 622
+screen_size_ratio = 622/7
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption('Gui Menu')
 clock = pygame.time.Clock()
 gui_font = pygame.font.Font(None, 30)
 
 game_array = generate_solution(game_array)
-starting_position =[[0 + int(game_array[0,0]), 0], [0 , 0 + int(game_array[0,0])]]
+starting_position =[[0 ], [0 , 0 + int(game_array[0,0])]]
+starting_position_new_version = [0,0]
 print(starting_position)
+colors = itertools.cycle(['#08581D', '#75D26E'])
+base_color = next(colors)
+next_color = next(colors)
+current_color = base_color
+FPS = 60
+change_every_x_seconds = 0.5
+number_of_steps = change_every_x_seconds * FPS
+step = 1
+
+
+
 for x in range(7):
     for y in range(7):
         button = Button(str(int((game_array[x,y]))), screen_size_ratio - 7 , screen_size_ratio - 7,
                         ((5 + x * screen_size_ratio), (5 + y * screen_size_ratio)), [x,y], game_array)
 
-def buttons_draw(condition):
+def buttons_draw(condition, current_color):
     for b in buttons:
-        b.draw(condition)
+        b.draw(condition, current_color)
 
 
 
@@ -158,11 +226,22 @@ while True:
             sys.exit()
 
     screen.fill('#272E39')
-    if seconds < 5:
-        buttons_draw(True)
+    if seconds < 6:
+        step += 1
+        if step < number_of_steps:
+            # (y-x)/number_of_steps calculates the amount of change per step required to
+            # fade one channel of the old color to the new color
+            # We multiply it with the current step counter
+            current_color = [x + (((y - x) / number_of_steps) * step) for x, y in
+                             zip(pygame.color.Color(base_color), pygame.color.Color(next_color))]
+        else:
+            step = 1
+            base_color = next_color
+            next_color = next(colors)
+        buttons_draw(True, current_color)
         first = True
     else:
-        buttons_draw(False)
+        buttons_draw(False, None)
 
     pygame.display.update()
     clock.tick(60)
