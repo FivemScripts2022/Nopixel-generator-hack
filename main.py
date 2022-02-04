@@ -61,15 +61,15 @@ def generate_solution(game_array):
 
 
 class Button:
-    def __init__(self, text, width, height, pos):
+    def __init__(self, text, width, height, pos, array_position):
         # Core attributes
         self.pressed = False
-
+        self.position = array_position
         # top rectangle
         self.width = width
         self.height = height
         self.top_rect = pygame.Rect(pos, (width, height))
-        self.top_color = '#475F77'
+        self.top_color = '#04581F'
 
         # text
         self.text = text
@@ -99,24 +99,28 @@ class Button:
                     print('click')
                     self.pressed = False
                     self.change_text(self.text)
+                    if (self.position[0] - int(self.text) == starting_position[0][0]):
+                        print("Yes")
         else:
             self.top_color = '#475F77'
 
 
 pygame.init()
-screen = pygame.display.set_mode((500, 500))
+screen_width = 500
+screen_height = 500
+screen_size_ratio = 500/7
+screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption('Gui Menu')
 clock = pygame.time.Clock()
 gui_font = pygame.font.Font(None, 30)
 
-#button1 = Button('Rome', 40, 40, (100, 200), 5)
-#button2 = Button('Milan', 40, 40, (100, 250), 5)
-#button3 = Button('Neaples', 40, 40, (100, 300), 5)
 game_array = generate_solution(game_array)
+starting_position =[[0 + game_array[0,0], 0], [0 , 0 + game_array[0,0]]]
 
 for x in range(7):
     for y in range(7):
-        button = Button(str(int((game_array[x,y]))), 40, 40, ((0 + x * 45), (0 + y * 45)))
+        button = Button(str(int((game_array[x,y]))), screen_size_ratio - 7 , screen_size_ratio - 7,
+                        ((5 + x * screen_size_ratio), (5 + y * screen_size_ratio)), [x,y])
 
 def buttons_draw():
     for b in buttons:
@@ -129,7 +133,7 @@ while True:
             pygame.quit()
             sys.exit()
 
-    screen.fill('#DCDDD8')
+    screen.fill('#272E39')
     buttons_draw()
 
     pygame.display.update()
