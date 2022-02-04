@@ -1,7 +1,7 @@
 import sys, pygame
 import numpy as np
 import random
-
+import time
 
 buttons = []
 game_array = np.zeros((7,7))
@@ -81,16 +81,20 @@ class Button:
         self.text_surf = gui_font.render(newtext, True, '#FFFFFF')
         self.text_rect = self.text_surf.get_rect(center=self.top_rect.center)
 
-    def draw(self):
-
-        pygame.draw.rect(screen, self.top_color, self.top_rect)
-        screen.blit(self.text_surf, self.text_rect)
-        self.check_click()
-
+    def draw(self, show_numbers):
+        if self.position == [0,0]:
+            print("I am the start")
+            self.image =
+        elif show_numbers:
+            pygame.draw.rect(screen, self.top_color, self.top_rect)
+            screen.blit(self.text_surf, self.text_rect)
+            self.check_click()
+        else:
+            pygame.draw.rect(screen, self.top_color, self.top_rect)
+            self.check_click()
     def check_click(self):
         mouse_pos = pygame.mouse.get_pos()
         if self.top_rect.collidepoint(mouse_pos):
-            self.top_color = '#04581F'
             if pygame.mouse.get_pressed()[0]:
                 self.pressed = True
                 self.change_text(f"{self.text}")
@@ -108,18 +112,18 @@ class Button:
                         print("Yes")
                         del starting_position[0]
                         starting_position.insert(0, self.position)
-
+                        self.top_color = '#00FF00'
                     elif ([starting_position[1][0] + int(game_array[starting_position[1][0], starting_position[1][1]]), starting_position[1][1]] == self.position)\
                             or ([starting_position[1][0], starting_position[1][1] + int(game_array[starting_position[1][0], starting_position[1][1]])] == self.position):
                         print("Yes")
                         del starting_position[1]
                         starting_position.insert(1, self.position)
+                        self.top_color = '#00FF00'
                     else:
                         print("This is wrong")
+                        self.top_color = '#FF0000'
 
 
-        else:
-            self.top_color = '#04581F'
 
 
 pygame.init()
@@ -139,19 +143,26 @@ for x in range(7):
         button = Button(str(int((game_array[x,y]))), screen_size_ratio - 7 , screen_size_ratio - 7,
                         ((5 + x * screen_size_ratio), (5 + y * screen_size_ratio)), [x,y], game_array)
 
-def buttons_draw():
+def buttons_draw(condition):
     for b in buttons:
-        b.draw()
+        b.draw(condition)
 
 
+
+start_ticks=pygame.time.get_ticks()
 while True:
+    seconds = (pygame.time.get_ticks() - start_ticks) / 1000
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
 
     screen.fill('#272E39')
-    buttons_draw()
+    if seconds < 5:
+        buttons_draw(True)
+        first = True
+    else:
+        buttons_draw(False)
 
     pygame.display.update()
     clock.tick(60)
