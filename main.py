@@ -61,16 +61,16 @@ def generate_solution(game_array):
 
 
 class Button:
-    def __init__(self, text, width, height, pos):
+    def __init__(self, text, width, height, pos, array_position, game_array):
         # Core attributes
         self.pressed = False
-
+        self.position = array_position
         # top rectangle
         self.width = width
         self.height = height
         self.top_rect = pygame.Rect(pos, (width, height))
-        self.top_color = '#475F77'
-
+        self.top_color = '#04581F'
+        self.game_array = game_array
         # text
         self.text = text
         self.text_surf = gui_font.render(text, True, '#FFFFFF')
@@ -90,7 +90,7 @@ class Button:
     def check_click(self):
         mouse_pos = pygame.mouse.get_pos()
         if self.top_rect.collidepoint(mouse_pos):
-            self.top_color = '#D74B4B'
+            self.top_color = '#04581F'
             if pygame.mouse.get_pressed()[0]:
                 self.pressed = True
                 self.change_text(f"{self.text}")
@@ -98,25 +98,46 @@ class Button:
                 if self.pressed == True:
                     print('click')
                     self.pressed = False
-                    self.change_text(self.text)
+                    print(self.position)
+                    print(self.text)
+                    print("below")
+                    print([starting_position[0][0] + int(game_array[starting_position[0][0], starting_position[0][1]]), starting_position[0][1]])
+                    if ([starting_position[0][0] + int(game_array[starting_position[0][0], starting_position[0][1]]), starting_position[0][1]] == self.position)\
+                            or ([starting_position[0][0], starting_position[0][1] + int(game_array[starting_position[0][0], starting_position[0][1]])] == self.position)\
+                            :
+                        print("Yes")
+                        del starting_position[0]
+                        starting_position.insert(0, self.position)
+
+                    elif ([starting_position[1][0] + int(game_array[starting_position[1][0], starting_position[1][1]]), starting_position[1][1]] == self.position)\
+                            or ([starting_position[1][0], starting_position[1][1] + int(game_array[starting_position[1][0], starting_position[1][1]])] == self.position):
+                        print("Yes")
+                        del starting_position[1]
+                        starting_position.insert(1, self.position)
+                    else:
+                        print("This is wrong")
+
+
         else:
-            self.top_color = '#475F77'
+            self.top_color = '#04581F'
 
 
 pygame.init()
-screen = pygame.display.set_mode((500, 500))
+screen_width = 500
+screen_height = 500
+screen_size_ratio = 500/7
+screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption('Gui Menu')
 clock = pygame.time.Clock()
 gui_font = pygame.font.Font(None, 30)
 
-#button1 = Button('Rome', 40, 40, (100, 200), 5)
-#button2 = Button('Milan', 40, 40, (100, 250), 5)
-#button3 = Button('Neaples', 40, 40, (100, 300), 5)
 game_array = generate_solution(game_array)
-
+starting_position =[[0 + int(game_array[0,0]), 0], [0 , 0 + int(game_array[0,0])]]
+print(starting_position)
 for x in range(7):
     for y in range(7):
-        button = Button(str(int((game_array[x,y]))), 40, 40, ((0 + x * 45), (0 + y * 45)))
+        button = Button(str(int((game_array[x,y]))), screen_size_ratio - 7 , screen_size_ratio - 7,
+                        ((5 + x * screen_size_ratio), (5 + y * screen_size_ratio)), [x,y], game_array)
 
 def buttons_draw():
     for b in buttons:
@@ -129,7 +150,7 @@ while True:
             pygame.quit()
             sys.exit()
 
-    screen.fill('#DCDDD8')
+    screen.fill('#272E39')
     buttons_draw()
 
     pygame.display.update()
