@@ -3,15 +3,20 @@ import numpy as np
 import random
 import time
 import itertools
+import sys
+import os
 
 
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
 
-buttons = []
-game_array = np.zeros((7,7))
-wrong_counter = 0
+    return os.path.join(base_path, relative_path)
+
+
 def generate_solution(game_array):
-    current_index = [0, 0]
-    starting_index = [0, 0]
     available_direction = ["down", "right"]
     solution_array = game_array
     top_left_value = random.randint(1,3)
@@ -95,20 +100,18 @@ class Button:
             self.check_click()
         else:
             if self.position == [0,0]:
-                top_left_image = pygame.image.load('top_left.png').convert_alpha()
-                top_left_image_width = top_left_image.get_width()
-                top_left_image_height = top_left_image.get_height()
+                top_left_image_url = resource_path('top_left.png')
+                top_left_image = pygame.image.load(top_left_image_url).convert_alpha()
                 top_left_image = pygame.transform.scale(top_left_image, (self.height, self.width) )
                 self.image_rect = top_left_image.get_rect(topleft=(self.pos))
                 screen.blit(top_left_image,(self.image_rect))
                 self.check_click()
             elif self.position == [6,6]:
-                top_left_image = pygame.image.load('bottom_right.png').convert_alpha()
-                top_left_image_width = top_left_image.get_width()
-                top_left_image_height = top_left_image.get_height()
-                top_left_image = pygame.transform.scale(top_left_image, (self.height, self.width) )
-                self.image_rect = top_left_image.get_rect(topleft=(self.pos))
-                screen.blit(top_left_image,(self.image_rect))
+                bottom_right_image_url = resource_path('bottom_right.png')
+                bottom_right_image = pygame.image.load(bottom_right_image_url).convert_alpha()
+                bottom_right_image = pygame.transform.scale(bottom_right_image, (self.height, self.width))
+                self.image_rect = bottom_right_image.get_rect(topleft=self.pos)
+                screen.blit(bottom_right_image,(self.image_rect))
                 self.check_click()
             elif self.position in starting_position and show_numbers == True:
                 pygame.draw.rect(screen, self.top_color, self.top_rect)
@@ -169,18 +172,25 @@ class Button:
                     self.clicked = True
         for i in starting_position:
             if i == [6, 6]:
-                bg = pygame.image.load("network access granted.png")
+                bg_url = resource_path('network access granted.png')
+                bg = pygame.image.load(bg_url)
                 bg = pygame.transform.scale(bg, (screen.get_height(), screen.get_width()))
                 screen.blit(bg, (0, 0))
         if wrong_counter == 3:
-            failed_bg = pygame.image.load("network_failed.png")
+            failed_bg_url = resource_path('network_failed.png')
+            failed_bg = pygame.image.load(failed_bg_url)
             failed_bg = pygame.transform.scale(failed_bg, (screen.get_height(), screen.get_width()))
             screen.blit(failed_bg, (0, 0))
 
 
+def buttons_draw(condition, current_color):
+    for b in buttons:
+        b.draw(condition, current_color)
 
 
-
+buttons = []
+game_array = np.zeros((7,7))
+wrong_counter = 0
 
 pygame.init()
 screen_width = 622
@@ -192,8 +202,8 @@ clock = pygame.time.Clock()
 gui_font = pygame.font.Font(None, 30)
 
 game_array = generate_solution(game_array)
-starting_position =[[0 ], [0 , 0 + int(game_array[0,0])]]
-starting_position_new_version = [0,0]
+starting_position = [[0], [0 , 0 + int(game_array[0, 0])]]
+starting_position_new_version = [0, 0]
 print(starting_position)
 colors = itertools.cycle(['#08581D', '#75D26E'])
 base_color = next(colors)
@@ -204,18 +214,10 @@ change_every_x_seconds = 0.5
 number_of_steps = change_every_x_seconds * FPS
 step = 1
 
-
-
 for x in range(7):
     for y in range(7):
-        button = Button(str(int((game_array[x,y]))), screen_size_ratio - 7 , screen_size_ratio - 7,
-                        ((5 + x * screen_size_ratio), (5 + y * screen_size_ratio)), [x,y], game_array)
-
-def buttons_draw(condition, current_color):
-    for b in buttons:
-        b.draw(condition, current_color)
-
-
+        button = Button(str(int((game_array[x, y]))), screen_size_ratio - 7 , screen_size_ratio - 7,
+                        ((5 + x * screen_size_ratio), (5 + y * screen_size_ratio)), [x, y], game_array)
 
 start_ticks=pygame.time.get_ticks()
 while True:
@@ -226,7 +228,13 @@ while True:
             sys.exit()
 
     screen.fill('#272E39')
-    if seconds < 6:
+    if seconds < 3:
+        failed_bg_url = resource_path('start.png')
+        failed_bg = pygame.image.load(failed_bg_url)
+        failed_bg = pygame.transform.scale(failed_bg, (screen.get_height(), screen.get_width()))
+        screen.blit(failed_bg, (0, 0))
+
+    elif seconds < 9:
         step += 1
         if step < number_of_steps:
             # (y-x)/number_of_steps calculates the amount of change per step required to
@@ -240,8 +248,13 @@ while True:
             next_color = next(colors)
         buttons_draw(True, current_color)
         first = True
-    else:
+    elif seconds < 18:
         buttons_draw(False, None)
 
+    else:
+        failed_bg_url = resource_path('network_failed.png')
+        failed_bg = pygame.image.load(failed_bg_url)
+        failed_bg = pygame.transform.scale(failed_bg, (screen.get_height(), screen.get_width()))
+        screen.blit(failed_bg, (0, 0))
     pygame.display.update()
     clock.tick(60)
